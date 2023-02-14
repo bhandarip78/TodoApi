@@ -104,11 +104,11 @@
 ---
 
 ### Postman Screenshot - Getting Okta token for API authentication and calling API with token for authorization
-![alt text](https://github.com/bhandarip78/TodoApi/blob/main/okta-oauth2-token.png?raw=true)
+![alt text](https://github.com/bhandarip78/TodoApi/blob/main/okta-oauth2-token.PNG?raw=true)
 ---
-![alt text](https://github.com/bhandarip78/TodoApi/blob/main/calling-api-with-token.png?raw=true)
+![alt text](https://github.com/bhandarip78/TodoApi/blob/main/calling-api-with-token.PNG?raw=true)
 ---
-![alt text](https://github.com/bhandarip78/TodoApi/blob/main/calling-api-without-token-unauthorized.png?raw=true)
+![alt text](https://github.com/bhandarip78/TodoApi/blob/main/calling-api-without-token-unauthorized.PNG?raw=true)
 ---
 
 ![Tech Stack](https://skills.thijs.gg/icons?i=java,spring,maven,git)
