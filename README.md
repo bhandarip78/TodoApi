@@ -63,7 +63,7 @@
     >spring.mail.properties.mail.smtp.auth=true\
     >spring.mail.properties.mail.smtp.starttls.enable=true\
     >client-to-email={email address where you want to get the notification for uncompleted task}\
-    >![alt text](https://github.com/bhandarip78/TodoApi/blob/main/uncomplete-task-email-inbox.PNG?raw=true)
+    >![alt text](https://github.com/bhandarip78/TodoApi/blob/main/uncomplete-task-email-inbox.png?raw=true)
 ---
 
 ### Api Security Setup - OKTA
