@@ -16,6 +16,9 @@ import java.text.MessageFormat;
 public class UnCompleteTaskNotificationJob implements Job {
     private final static Logger logger = LoggerFactory.getLogger(UnCompleteTaskNotificationJob.class);
 
+    @Autowired
+    private TodoEmailService todoEmailService;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException{
         try {
@@ -30,7 +33,7 @@ public class UnCompleteTaskNotificationJob implements Job {
 
             logger.debug(MessageFormat.format("Email: {0} | Subject: {1} | Body: {2}", recipientEmail, subject, body));
 
-            //todoEmailService.sendMessage(recipientEmail, subject, body);
+            todoEmailService.sendMessage(recipientEmail, subject, body);
             logger.debug("Successfully sent email");
         }
         catch (Exception ex) {
