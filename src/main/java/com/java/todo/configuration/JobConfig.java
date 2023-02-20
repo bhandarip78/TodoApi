@@ -1,9 +1,9 @@
 package com.java.todo.configuration;
 
-import com.java.todo.job.UnCompleteTaskNotificationJob;
-import com.java.todo.job.DataToSendEmail;
-import com.java.todo.model.EmailMessage;
+import com.java.todo.job.DataToSendEmailJob;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -15,13 +15,14 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Properties;
 
 @Configuration
 @EnableScheduling
 public class JobConfig implements SchedulingConfigurer {
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -33,66 +34,47 @@ public class JobConfig implements SchedulingConfigurer {
         taskRegistrar.setTaskScheduler(threadPoolTaskScheduler);
     }
 
-    @Bean("todoSchedulerFactoryBean")
-    public SchedulerFactoryBean todoSchedulerFactoryBean(DataSource dataSource) {
+    @Bean("uncompleteTodoDataSchedulerFactory")
+    public SchedulerFactoryBean uncompleteTodoDataSchedulerFactory(DataSource dataSource) {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
+
         Properties properties = new Properties();
-        properties.setProperty("org.quartz.threadPool.threadNamePrefix", "todo-scheduler_thread");
+        properties.setProperty("org.quartz.threadPool.threadNamePrefix", "todo-uncomplete-scheduler_thread");
         factory.setQuartzProperties(properties);
         factory.setDataSource(dataSource);
+
+        //Custom job factory of spring with DI support for @Autowired!
+        AutowiringJobFactory jobFactory = new AutowiringJobFactory();
+        jobFactory.setApplicationContext(applicationContext);
+        factory.setJobFactory(jobFactory);
+
         return factory;
     }
 
-    @Bean("todoScheduler")
-    public Scheduler todoScheduler(@Qualifier("todoSchedulerFactoryBean") SchedulerFactoryBean factory) throws SchedulerException {
+    @Bean("uncompleteTodoScheduler")
+    public Scheduler uncompleteTodoScheduler(@Qualifier("uncompleteTodoDataSchedulerFactory") SchedulerFactoryBean factory) throws SchedulerException {
         Scheduler scheduler = factory.getScheduler();
         scheduler.start();
         return scheduler;
     }
 
     @Bean
-    public CommandLineRunner run(@Qualifier("todoScheduler") Scheduler todoScheduler, @Qualifier("dataToSendEmail") DataToSendEmail dataToSendEmail) {
+    public CommandLineRunner run(@Qualifier("uncompleteTodoScheduler") Scheduler uncompleteTodoScheduler) {
         return (String[] args) -> {
+            SimpleScheduleBuilder scheduleBuilder1 = SimpleScheduleBuilder
+                    .simpleSchedule()
+                    .withIntervalInSeconds(5)
+                    .repeatForever();
 
-            System.out.println("HEL0000000000000000000");
-            List<EmailMessage> emailMessages = dataToSendEmail.getMessageList();
+            Trigger trigger = TriggerBuilder
+                    .newTrigger()
+                    .withSchedule(scheduleBuilder1)
+                    .build();
 
-            if (emailMessages != null & emailMessages.size() > 0) {
-                System.out.println("Uncomplete Task found");
-            }
-            else {
-                System.out.println("Uncomplete Task NOT found");
-            }
+            JobDetail jobDetail = JobBuilder.newJob(DataToSendEmailJob.class)
+                    .build();
 
-            for (EmailMessage emailMessage:
-                 emailMessages) {
-                JobDetail jobDetail = createJobDetail(emailMessage);
-
-                SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder
-                        .simpleSchedule()
-                        .withIntervalInSeconds(5)
-                        .repeatForever();
-
-                Trigger trigger = TriggerBuilder
-                        .newTrigger()
-                        .withSchedule(scheduleBuilder)
-                        .build();
-
-                todoScheduler.scheduleJob(jobDetail, trigger);
-            }
+            uncompleteTodoScheduler.scheduleJob(jobDetail, trigger);
         };
-    }
-
-    private JobDetail createJobDetail(EmailMessage emailMessage) {
-        JobDataMap jobDataMap = new JobDataMap();
-
-        jobDataMap.put("email", emailMessage.getEmail());
-        jobDataMap.put("subject", emailMessage.getSubject());
-        jobDataMap.put("body", emailMessage.getBody());
-        jobDataMap.put("jobTriggerTime", LocalDateTime.now().toString());
-
-        return JobBuilder.newJob(UnCompleteTaskNotificationJob.class)
-                .usingJobData(jobDataMap)
-                .build();
     }
 }

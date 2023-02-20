@@ -1,10 +1,13 @@
 package com.java.todo.controller;
 
+import com.java.todo.configuration.RepresentationModelAssemblerConfig;
 import com.java.todo.exception.TodoNotFoundException;
 import com.java.todo.model.Todo;
 import com.java.todo.service.TodoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,23 +18,31 @@ import java.util.List;
 public class TodoController {
     private final static Logger logger = LoggerFactory.getLogger(TodoController.class);
     private TodoService todoService;
+    private RepresentationModelAssemblerConfig todoModelAssembler;
 
-    public TodoController(TodoService todoService) {
+    public TodoController(TodoService todoService, RepresentationModelAssemblerConfig todoModelAssembler) {
         this.todoService = todoService;
+        this.todoModelAssembler = todoModelAssembler;
     }
 
     @GetMapping("/todo/{id}")
-    public ResponseEntity<Todo> get(@PathVariable("id") Integer id) {
+    public ResponseEntity<EntityModel<Todo>> get(@PathVariable("id") Integer id) {
         logger.debug("Inside get api.");
         Todo task = todoService.getTask(id);
+        EntityModel<Todo> taskModel = todoModelAssembler.toModel(task);
 
-        return new ResponseEntity<>(task, HttpStatus.OK);
+        return new ResponseEntity<>(taskModel, HttpStatus.OK);
     }
 
     @GetMapping("/todos/{user}")
     public ResponseEntity<List<Todo>> getAll(@PathVariable("user") String user) {
         List<Todo> taskList = todoService.getTasks(user);
 
+        if (taskList.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        CollectionModel<EntityModel<Todo>> taskCollection = todoModelAssembler.toCollectionModel(taskList);
         return new ResponseEntity<>(taskList, HttpStatus.OK);
     }
 
@@ -80,7 +91,7 @@ public class TodoController {
     }
 
     @DeleteMapping("/todo/{id}")
-    public ResponseEntity<?> DeleteTask(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteTask(@PathVariable Integer id) {
         try {
             todoService.delete(id);
 

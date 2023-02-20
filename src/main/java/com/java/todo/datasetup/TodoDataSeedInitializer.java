@@ -19,22 +19,23 @@ public class TodoDataSeedInitializer {
         this.todoRepo = todoRepo;
     }
 
-    @Bean
+    @Bean("initDatabase")
     public CommandLineRunner initDatabase() {
         return args -> {
-            Date d = new Date(System.currentTimeMillis());
             Todo jt1 = new Todo("Go to training class", "Mandatory training", false, "John", Date.valueOf(LocalDate.of(2023, 02, 07)));
             Todo jt2 = new Todo("Meeting with client", "At downtown", false, "John", Date.valueOf(LocalDate.of(2023, 02, 07)));
             Todo jt3 = new Todo("Send an email to doctor", "Regarding medicine", false, "John", Date.valueOf(LocalDate.of(2023, 02, 06)));
             Todo mt1 = new Todo("Send design doc to security officer", "With encryption", false, "Mike", Date.valueOf(LocalDate.of(2023, 02, 15)));
             Todo mt2 = new Todo("Call to make an appointment", "Doctor appointment", false, "Mike", Date.valueOf(LocalDate.of(2023, 02, 15)));
+            Todo mt3 = new Todo("Pay bill", "Pay bill", false, "Mike", Date.valueOf(LocalDate.of(2023, 03, 25)));
 
-            List<Todo> lt = new ArrayList<Todo>();
+            List<Todo> lt = new ArrayList<>();
             lt.add(jt1);
             lt.add(jt2);
             lt.add(jt3);
             lt.add(mt1);
             lt.add(mt2);
+            lt.add(mt3);
             todoRepo.saveAll(lt);
 
             System.out.println("Todo data seed initialized");
